@@ -164,6 +164,7 @@ const checkOrder = () => {
 <style scoped>
 .grammar-quiz {
   text-align: center;
+  background-color: #F4EEEE;
   padding: 10px;
 }
 
@@ -185,13 +186,13 @@ button {
   font-size: 18px;
   cursor: pointer;
   border: none;
-  background-color: #007bff;
+  background-color: #b65a5d;
   color: white;
   border-radius: 5px;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #b65a5d;
 }
 
 p {
