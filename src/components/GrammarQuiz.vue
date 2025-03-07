@@ -40,7 +40,7 @@
   import { ref, onMounted } from 'vue';
   
   // 文章生成のための単語リスト
-  const mornings = ["", "You", "He", "She", "We", "They"];
+  const mornings = ["桜", "", "He", "She", "We", "They"];
   const drinks = ["ブレンド", "ストレート", "ダーク", "アイスティ", "レーコー", "ホットティ"];
   const calls = ["お願いします"];
   const types = ["単品で", "セットで"];
