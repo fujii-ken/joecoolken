@@ -218,13 +218,14 @@ const generateOrder = () => {
 
   for (let i = 0; i < numMorningItems; i++) {
     const randomIndex = Math.floor(Math.random() * morningItems.length);
-    selectedMorning.push({ ...morningItems[randomIndex] });
+    const randomQuantity = Math.floor(Math.random()) + 1; // 1〜4個のランダムな個数
+    selectedMorning.push({ ...morningItems[randomIndex], quantity: randomQuantity });
   }
 
-  // 各モーニングメニューに対応するドリンクをランダムで選択
-  const selectedDrinks = selectedMorning.map(() => {
+ // 各モーニングメニューに対応するドリンクをランダムで選択し、個数をモーニングメニューと同じにする
+ const selectedDrinks = selectedMorning.map(morning => {
     const randomIndex = Math.floor(Math.random() * setDrinkItems.length);
-    return { ...setDrinkItems[randomIndex] };
+    return { ...setDrinkItems[randomIndex], quantity: morning.quantity }; // 個数をモーニングメニューに合わせる
   });
 
   // 同じモーニングメニューをまとめる
@@ -234,11 +235,11 @@ const generateOrder = () => {
   selectedMorning.forEach((morning, index) => {
     if (!morningCounts[morning.write]) {
       morningCounts[morning.write] = {
-        morning: { ...morning, quantity: 1 },
+        morning: { ...morning },
         drinks: [selectedDrinks[index]],
       };
     } else {
-      morningCounts[morning.write].morning.quantity += 1;
+      morningCounts[morning.write].morning.quantity += morning.quantity;
       morningCounts[morning.write].drinks.push(selectedDrinks[index]);
     }
   });
@@ -252,14 +253,17 @@ const generateOrder = () => {
     const drinkCounts = {};
     group.drinks.forEach(drink => {
       if (!drinkCounts[drink.write]) {
-        drinkCounts[drink.write] = { ...drink, quantity: 1 };
+        drinkCounts[drink.write] = { ...drink, quantity: drink.quantity };
       } else {
-        drinkCounts[drink.write].quantity += 1;
+        drinkCounts[drink.write].quantity += drink.quantity;
       }
     });
 
+    // ドリンクを個数が多い順に並べ替える
+    const sortedDrinks = Object.values(drinkCounts).sort((a, b) => b.quantity - a.quantity);
+
     // ドリンクを伝票に追加
-    Object.values(drinkCounts).forEach(drink => {
+    sortedDrinks.forEach(drink => {
       selectedItems.value.push(drink);
     });
 
@@ -268,10 +272,50 @@ const generateOrder = () => {
     }
   });
 
+  // 単品注文の個数を確率分布に従って決定
+  const singleDrinkCount = getRandomSingleDrinkCount(); // 0, 1, 2のいずれか
+  const singleDrinkOrders = [];
+
+  if (singleDrinkCount > 0) {
+    for (let i = 0; i < singleDrinkCount; i++) {
+      const randomIndex = Math.floor(Math.random() * setDrinkItems.length);
+      const randomQuantity = Math.floor(Math.random()) + 1; // 1〜4個のランダムな個数
+      singleDrinkOrders.push({ ...setDrinkItems[randomIndex], quantity: randomQuantity });
+    }
+  }
+
+  // 単品注文を商品名ごとにまとめる
+  const singleDrinkSummary = {};
+  singleDrinkOrders.forEach(order => {
+    if (!singleDrinkSummary[order.write]) {
+      singleDrinkSummary[order.write] = { ...order, quantity: order.quantity };
+    } else {
+      singleDrinkSummary[order.write].quantity += order.quantity;
+    }
+  });
+
+  // 単品注文を伝票に追加
+  if (Object.keys(singleDrinkSummary).length > 0) {
+    selectedItems.value.push({ write: "", quantity: "", remark: "" }); // 1行開ける
+    Object.values(singleDrinkSummary).forEach((order, index) => {
+      selectedItems.value.push({ write: order.write, quantity: order.quantity, remark: "" });
+      if (index < Object.keys(singleDrinkSummary).length - 1) {
+        selectedItems.value.push({ write: "", quantity: "", remark: "" }); // 商品名ごとに1行開ける
+      }
+    });
+  }
+
   // 並び替えクイズ用のデータを生成
   generateQuiz();
 };
 
+// 単品注文の個数を確率分布に従って決定する関数
+const getRandomSingleDrinkCount = () => {
+  const randomValue = Math.random(); // 0〜1のランダムな値
+  if (randomValue < 0.5) return 0; // 50%の確率で0個
+  if (randomValue < 0.8) return 1; // 30%の確率で1個
+  return 2; // 20%の確率で2個
+};
 // 並び替えクイズを生成する関数
 const generateQuiz = () => {
   // ドリンクの個数をまとめる
